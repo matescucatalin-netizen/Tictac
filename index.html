@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exchange Display</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+
+<style>
+/* Soluția profi pentru a opri overflow-ul: forțăm toate elementele să își calculeze dimensiunile corect */
+* {
+  box-sizing: border-box;
+}
+
+html,body{
+margin:0;
+padding:0;
+height:100%;
+overflow:hidden;
+background:#fff;
+font-family:Oswald;
+}
+
+/* STRUCTURA PRINCIPALĂ FIXĂ */
+.shell{
+display:grid;
+grid-template-rows: 14vh 6vh 1fr 6vh;
+height:100vh;
+width:100vw;
+}
+
+/* HEADER */
+.header{
+display:grid;
+grid-template-columns:1fr 1fr 1fr;
+align-items:center;
+padding:0 3vw;
+border-bottom:3px solid #e9ecef;
+}
+
+.brand{
+font-family:'Bebas Neue';
+font-size:5.5vh;
+line-height:1;
+}
+
+.brand span{color:#a37a00}
+
+.sub{
+font-size:1.2vh;
+opacity:.5;
+letter-spacing:.25em;
+text-transform:uppercase;
+}
+
+.center{
+text-align:center;
+font-size:3vh;
+font-weight:700;
+}
+
+.clock{
+text-align:right;
+font-family:'Bebas Neue';
+font-size:6.5vh;
+cursor:pointer;
+user-select:none;
+}
+
+/* TABLE TITLES */
+.head{
+display:grid;
+grid-template-columns:2.6fr 1fr 1fr;
+align-items:center;
+padding:0 2vw;
+background:#f6f7f9;
+font-size:1.5vh;
+font-weight:700;
+letter-spacing:.2em;
+text-transform:uppercase;
+}
+
+/* TABLE AREA - Forțată să ocupe exact spațiul rămas, fără să împingă footer-ul */
+.table{
+display:grid;
+grid-template-rows: repeat(10, 1fr);
+height:100%;
+overflow:hidden; 
+}
+
+/* ROW ALIGNMENT */
+.row{
+display:grid;
+grid-template-columns:2.6fr 1fr 1fr;
+align-items:center;
+padding:0 2vw;
+border-bottom:1px solid #eee;
+height:100%;
+}
+
+.row:last-child {
+border-bottom: none; /* Elimină bordura la BGN ca să nu creeze pixel în plus */
+}
+
+/* alternare culori */
+.row:nth-child(even){
+background:#fafafa;
+}
+
+/* highlight EUR/USD */
+.hero{
+background:#fff7e2 !important;
+border-left:6px solid #a37a00;
+}
+
+/* CURRENCY */
+.currency{
+display:flex;
+align-items:center;
+gap:1.2vw;
+}
+
+.flag{
+width:6vh;
+height:4vh;
+border-radius:4px;
+object-fit:cover;
+}
+
+.code{
+font-size:3.4vh;
+font-weight:800;
+}
+
+.name{
+font-size:2.2vh;
+opacity:.6;
+margin-left:0.6vw;
+}
+
+/* RATE */
+.rate{
+font-family:'Bebas Neue';
+font-size:7.5vh;
+text-align:center;
+line-height:1;
+}
+
+.buy{color:#1a7a3a}
+.sell{color:#b3261e}
+
+/* FOOTER TICKER */
+.footer{
+background:#111;
+color:#fff;
+overflow:hidden;
+display:flex;
+align-items:center;
+}
+
+.ticker{
+white-space:nowrap;
+padding-left:100%;
+animation:move 20s linear infinite;
+font-size:2vh;
+letter-spacing:.15em;
+}
+
+@keyframes move{
+0%{transform:translateX(0)}
+100%{transform:translateX(-100%)}
+}
+
+/* PANOURI MODALE ASCUNSE (NU AFECTEAZĂ DESIGNUL) */
+.overlay { display:none; position:fixed; inset:0; background:rgba(255,255,255,0.96); backdrop-filter:blur(15px); z-index:2000; align-items:center; justify-content:center; }
+.overlay.show { display:flex; }
+.pin-box { background:#ffffff; border:2px solid #dee2e6; border-radius:24px; padding:4vh 3vw; text-align:center; width:28vw; box-shadow:0 15px 40px rgba(0,0,0,0.1); }
+.pin-title { font-family:'Bebas Neue',sans-serif; font-size:3.5vh; letter-spacing:0.1em; color:#a37a00; margin-bottom:2vh; }
+.pin-dots { display:flex; justify-content:center; gap:1.5vw; margin-bottom:4vh; }
+.pin-dot { width:1.5vw; height:1.5vw; border-radius:50%; border:2px solid #ced4da; }
+.pin-dot.on { background:#a37a00; border-color:#a37a00; box-shadow:0 0 10px rgba(163,122,0,0.5); }
+.pin-keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:1vw; }
+.pin-key { padding:2vh 0; background:#f8f9fa; border:1px solid #e9ecef; border-radius:12px; color:#111; font-family:'Bebas Neue'; font-size:3.5vh; cursor:pointer; user-select:none; }
+.pin-key:active { background:#e9ecef; }
+.pin-key.sm { font-family:Oswald; font-size:1.6vh; font-weight:600; color:#666; display:flex; align-items:center; justify-content:center; }
+
+.admin-ov { display:none; position:fixed; inset:0; background:rgba(255,255,255,0.98); backdrop-filter:blur(15px); z-index:1999; align-items:center; justify-content:center; }
+.admin-ov.show { display:flex; }
+.admin-box { background:#ffffff; border:2px solid #dee2e6; border-radius:24px; padding:3vh 2.5vw; width:50vw; max-height:90vh; overflow-y:auto; box-shadow:0 15px 40px rgba(0,0,0,0.1); }
+.adm-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:3vh; border-bottom:2px solid #eee; padding-bottom:1.5vh; }
+.adm-title { font-family:'Bebas Neue'; font-size:3.5vh; color:#a37a00; }
+.adm-close { background:#f8f9fa; border:1px solid #ced4da; width:4vh; height:4vh; border-radius:50%; cursor:pointer; font-weight:bold; }
+.adm-row { display:grid; grid-template-columns:2fr 1fr 1fr; gap:1vw; align-items:center; margin-bottom:1vh; padding:1vh; background:#f8f9fa; border-radius:10px; }
+.adm-cur { font-size:2.2vh; font-weight:700; display:flex; align-items:center; gap:0.5vw; }
+.adm-input { background:#fff; border:2px solid #ced4da; border-radius:6px; font-family:Oswald; font-size:2.2vh; font-weight:bold; padding:0.6vh; text-align:center; width:100%; }
+.adm-input:focus { border-color:#a37a00; outline:none; }
+.adm-save { width:100%; margin-top:3vh; padding:1.5vh 0; background:#a37a00; border:none; border-radius:12px; color:#fff; font-family:'Bebas Neue'; font-size:2.8vh; letter-spacing:0.1em; cursor:pointer; }
+.adm-msg { text-align:center; font-size:1.6vh; font-weight:bold; margin-top:1.5vh; color:#24b663; }
+</style>
+</head>
+
+<body>
+
+<!-- POPUP PIN -->
+<div class="overlay" id="pinOv">
+  <div class="pin-box">
+    <div class="pin-title">🔐 ACCES ADMIN</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-keypad">
+      <div class="pin-key" onclick="pk('1')">1</div><div class="pin-key" onclick="pk('2')">2</div><div class="pin-key" onclick="pk('3')">3</div>
+      <div class="pin-key" onclick="pk('4')">4</div><div class="pin-key" onclick="pk('5')">5</div><div class="pin-key" onclick="pk('6')">6</div>
+      <div class="pin-key" onclick="pk('7')">7</div><div class="pin-key" onclick="pk('8')">8</div><div class="pin-key" onclick="pk('9')">9</div>
+      <div class="pin-key sm" onclick="pkDel()">⌫ Șterge</div><div class="pin-key" onclick="0">0</div><div class="pin-key sm" onclick="pinClose()">✕ Ieși</div>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP FORMULAR SETĂRI -->
+<div class="admin-ov" id="adminOv">
+  <div class="admin-box">
+    <div class="adm-head">
+      <div class="adm-title">⚙ EDITEAZĂ CURSURI VALUTARE</div>
+      <button class="adm-close" onclick="adminClose()">✕</button>
+    </div>
+    <div id="adminRows"></div>
+    <button class="adm-save" id="admSaveBtn" onclick="adminSave()">✓ Salvează Modificările</button>
+    <div class="adm-msg" id="admMsg"></div>
+  </div>
+</div>
+
+<div class="shell">
+
+<!-- HEADER -->
+<div class="header">
+<div>
+<div class="brand">SERMIRAV <span>EXCHANGE</span></div>
+<div class="sub">Schimb Valutar • Display TV</div>
+</div>
+
+<div class="center" id="weather">🌤️ --°C</div>
+
+<!-- 3 Click-uri rapide pe ceas deschid panoul -->
+<div class="clock" id="clock" onclick="clockTap()">--:--</div>
+</div>
+
+<!-- TABLE HEADER -->
+<div class="head">
+<div>Valută</div>
+<div>Cumpărăm</div>
+<div>Vindem</div>
+</div>
+
+<!-- TABLE -->
+<div class="table" id="table"></div>
+
+<!-- FOOTER -->
+<div class="footer">
+<div class="ticker">
+✓ CURSURI NEGOCIABILE • ✓ MONEYGRAM • ✓ BIJUTERII • ✓ AMANET • ✓ CUMPĂRĂM AUR •
+</div>
+</div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<script>
+const PIN = "1234"; // Schimbă PIN-ul de aici
+
+firebase.initializeApp({
+databaseURL:"https://sermirav-exchange-default-rtdb.europe-west1.firebasedatabase.app/"
+});
+
+const db = firebase.database();
+const PATH = "tictac/rates";
+
+const currencies=[
+{c:"EUR",n:"Euro",f:"https://flagcdn.com/eu.svg"},
+{c:"USD",n:"Dolar",f:"https://flagcdn.com/us.svg"},
+{c:"GBP",n:"Liră",f:"https://flagcdn.com/gb.svg"},
+{c:"CHF",n:"Franc",f:"https://flagcdn.com/ch.svg"},
+{c:"CAD",n:"CAD",f:"https://flagcdn.com/ca.svg"},
+{c:"AUD",n:"AUD",f:"https://flagcdn.com/au.svg"},
+{c:"PLN",n:"PLN",f:"https://flagcdn.com/pl.svg"},
+{c:"TRY",n:"TRY",f:"https://flagcdn.com/tr.svg"},
+{c:"HUF",n:"HUF",f:"https://flagcdn.com/hu.svg"},
+{c:"BGN",n:"BGN",f:"https://flagcdn.com/bg.svg"}
+];
+
+const DEF={
+EUR:{buy:4.97,sell:5.05}, USD:{buy:4.33,sell:4.45}, GBP:{buy:5.82,sell:6.03}, CHF:{buy:5.59,sell:5.71},
+CAD:{buy:3.07,sell:3.30}, AUD:{buy:2.76,sell:3.10}, PLN:{buy:1.14,sell:1.22}, TRY:{buy:0.095,sell:0.119},
+HUF:{buy:0.013,sell:0.0141}, BGN:{buy:2.25,sell:2.66}
+};
+
+let rates={...DEF};
+
+function fmt(v){
+return (v===null||v===undefined||v==="")?"—":Number(v).toFixed(4);
+}
+
+function render(){
+const el=document.getElementById("table");
+el.innerHTML="";
+
+currencies.forEach(x=>{
+const r=rates[x.c]||{};
+const hero=(x.c==="EUR"||x.c==="USD");
+
+el.innerHTML+=`
+<div class="row ${hero?"hero":""}">
+  <div class="currency">
+    <img class="flag" src="${x.f}">
+    <div class="code">${x.c} <span class="name">${x.n}</span></div>
+  </div>
+  <div class="rate buy">${fmt(r.buy)}</div>
+  <div class="rate sell">${fmt(r.sell)}</div>
+</div>`;
+});
+}
+
+db.ref(PATH).on("value",snap=>{
+const d=snap.val();
+if(d) rates=d;
+render();
+});
+
+function clock(){
+const d=new Date();
+document.getElementById("clock").innerText=
+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+}
+setInterval(clock,1000);
+clock();
+
+async function weather(){
+try{
+const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=45.1&longitude=24.37&current=temperature_2m");
+const d=await r.json();
+document.getElementById("weather").innerText="🌤️ "+Math.round(d.current.temperature_2m)+"°C";
+}catch(e){}
+}
+weather();
+setInterval(weather, 600000);
+
+/* LOGICĂ ABSOLUTĂ ADMIN PENTRU UPDATE CURSURI */
+let buf="";
+window.pk=function(d){
+  if(buf.length>=4)return; buf+=d; for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('on',i<buf.length);
+  if(buf.length===4){ setTimeout(()=>{ if(buf===PIN){pinClose();adminOpen();}else{alert('PIN incorect!');buf='';for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.remove('on');} },100); }
+};
+window.pkDel=function(){ buf=buf.slice(0,-1); for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('on',i<buf.length); };
+window.pinClose=function(){ document.getElementById('pinOv').classList.remove('show'); buf=''; for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.remove('on'); };
+window.pinOpen=function(){ document.getElementById('pinOv').classList.add('show'); };
+
+let tc=0,tt=null; window.clockTap=function(){ tc++; clearTimeout(tt); tt=setTimeout(()=>tc=0,1200); if(tc>=3){tc=0;pinOpen();} };
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){pinClose();adminClose();} });
+
+function adminOpen(){
+  const rows=document.getElementById('adminRows'); rows.innerHTML='';
+  currencies.forEach(x=>{
+    const b=rates[x.c]?.buy??"", s=rates[x.c]?.sell??"";
+    rows.innerHTML+=`<div class="adm-row"><div class="adm-cur"><img src="${x.f}" style="width:4vh;height:2.6vh;object-fit:cover;border-radius:2px;"> ${x.c}</div><input class="adm-input" type="number" step="0.0001" id="ab-${x.c}" value="${b}"><input class="adm-input" type="number" step="0.0001" id="as-${x.c}" value="${s}"></div>`;
+  });
+  document.getElementById('adminOv').classList.add('show');
+}
+window.adminClose=function(){ document.getElementById('adminOv').classList.remove('show'); };
+window.adminSave=async function(){
+  const btn=document.getElementById('admSaveBtn'), msg=document.getElementById('admMsg'); btn.disabled=true; btn.textContent='⏳ Se salvează...'; const nr={};
+  currencies.forEach(x=>{ nr[x.c]={ buy:parseFloat(document.getElementById('ab-'+x.c).value)||null, sell:parseFloat(document.getElementById('as-'+x.c).value)||null }; });
+  try{ await db.ref(PATH).set(nr); msg.textContent='✓ Cursuri salvate cu succes!'; }catch(e){ msg.textContent='✕ Eroare salvat.'; }
+  btn.disabled=false; btn.textContent='✓ Salvează Modificările'; setTimeout(()=>{msg.textContent='';adminClose();},2000);
+};
+</script>
+
+</body>
+</html>
