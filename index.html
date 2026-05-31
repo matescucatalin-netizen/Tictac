@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sermirav Exchange</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#ffffff;font-family:'Oswald',sans-serif;color:#111}
+
+/* GRID */
+.shell{
+display:grid;
+grid-template-rows:16vh 1fr 7vh;
+height:100vh;
+}
+
+/* HEADER */
+.header{
+display:grid;
+grid-template-columns:1.2fr 1fr 1fr;
+align-items:center;
+padding:0 3vw;
+border-bottom:4px solid #e9ecef;
+}
+
+.brand{
+line-height:1;
+}
+
+.brand-main{
+font-family:'Bebas Neue';
+font-size:6vh;
+letter-spacing:.05em;
+}
+
+.brand-main span{
+color:#a37a00;
+}
+
+.brand-sub{
+font-size:1.4vh;
+opacity:.5;
+letter-spacing:.25em;
+text-transform:uppercase;
+margin-top:0.5vh;
+}
+
+.center{
+text-align:center;
+font-size:3vh;
+font-weight:700;
+}
+
+.clock{
+text-align:right;
+font-family:'Bebas Neue';
+font-size:7vh;
+}
+
+/* TABLE */
+.table-head{
+display:grid;
+grid-template-columns:2.6fr 1fr 1fr;
+background:#f6f7f9;
+padding:1.2vh 2vw;
+font-size:1.6vh;
+letter-spacing:.2em;
+font-weight:700;
+text-transform:uppercase;
+color:#555;
+}
+
+.table{
+display:flex;
+flex-direction:column;
+height:100%;
+}
+
+/* ROWS */
+.row{
+display:grid;
+grid-template-columns:2.6fr 1fr 1fr;
+align-items:center;
+padding:1.4vh 2vw;
+border-bottom:1px solid #eee;
+}
+
+.row:nth-child(even){background:#fafafa}
+
+/* HERO (EUR / USD) */
+.hero{
+background:#fff6e6 !important;
+border-left:8px solid #a37a00;
+}
+
+.currency{
+display:flex;
+align-items:center;
+gap:1.5vw;
+}
+
+.flag{
+width:6vh;
+height:4vh;
+border-radius:4px;
+box-shadow:0 2px 10px rgba(0,0,0,.08);
+}
+
+.code{
+font-size:3.6vh;
+font-weight:800;
+}
+
+.name{
+font-size:2.4vh;
+opacity:.6;
+margin-left:0.8vw;
+}
+
+.rate{
+font-family:'Bebas Neue';
+font-size:8vh;
+text-align:center;
+}
+
+.buy{
+color:#137a3a;
+}
+
+.sell{
+color:#b3261e;
+}
+
+/* FOOTER TICKER */
+.footer{
+background:#111;
+color:#fff;
+display:flex;
+align-items:center;
+overflow:hidden;
+}
+
+.ticker{
+white-space:nowrap;
+display:inline-block;
+padding-left:100%;
+animation:move 22s linear infinite;
+font-size:2.2vh;
+letter-spacing:.15em;
+}
+
+@keyframes move{
+0%{transform:translateX(0)}
+100%{transform:translateX(-100%)}
+}
+</style>
+</head>
+
+<body>
+
+<div class="shell">
+
+<!-- HEADER -->
+<div class="header">
+
+<div class="brand">
+<div class="brand-main">SERMIRAV <span>EXCHANGE</span></div>
+<div class="brand-sub">Schimb Valutar • Râmnicu Vâlcea</div>
+</div>
+
+<div class="center" id="weather">🌤️ --°C</div>
+
+<div class="clock" id="clock">--:--</div>
+
+</div>
+
+<!-- HEAD -->
+<div class="table-head">
+<div>Valută</div>
+<div>Cumpărăm</div>
+<div>Vindem</div>
+</div>
+
+<!-- TABLE -->
+<div class="table" id="table"></div>
+
+<!-- FOOTER -->
+<div class="footer">
+<div class="ticker">
+✓ CURSURI NEGOCIABILE • ✓ MONEYGRAM • ✓ BIJUTERII • ✓ AMANET • ✓ CUMPĂRĂM AUR •
+</div>
+</div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const app = initializeApp({
+databaseURL:"https://sermirav-exchange-default-rtdb.europe-west1.firebasedatabase.app/"
+});
+
+const db = getDatabase(app);
+const PATH="tictac/rates";
+
+const currencies=[
+{c:"EUR",n:"Euro",f:"https://flagcdn.com/eu.svg"},
+{c:"USD",n:"Dolar",f:"https://flagcdn.com/us.svg"},
+{c:"GBP",n:"Liră",f:"https://flagcdn.com/gb.svg"},
+{c:"CHF",n:"Franc",f:"https://flagcdn.com/ch.svg"},
+{c:"CAD",n:"Canada",f:"https://flagcdn.com/ca.svg"},
+{c:"AUD",n:"Australia",f:"https://flagcdn.com/au.svg"},
+{c:"PLN",n:"Zlot",f:"https://flagcdn.com/pl.svg"},
+{c:"TRY",n:"Liră TR",f:"https://flagcdn.com/tr.svg"},
+{c:"HUF",n:"Forint",f:"https://flagcdn.com/hu.svg"},
+{c:"BGN",n:"Lev",f:"https://flagcdn.com/bg.svg"}
+];
+
+let rates={};
+
+onValue(ref(db,PATH),snap=>{
+rates=snap.val()||{};
+render();
+});
+
+function fmt(v){
+return v?parseFloat(v).toFixed(2):"—";
+}
+
+function render(){
+const el=document.getElementById("table");
+el.innerHTML="";
+
+currencies.forEach(x=>{
+
+const r=rates[x.c]||{};
+const hero = (x.c==="EUR"||x.c==="USD");
+
+el.innerHTML+=`
+<div class="row ${hero?"hero":""}">
+<div class="currency">
+<img class="flag" src="${x.f}">
+<div>
+<div class="code">${x.c} <span class="name">${x.n}</span></div>
+</div>
+</div>
+
+<div class="rate buy">${fmt(r.buy)}</div>
+<div class="rate sell">${fmt(r.sell)}</div>
+</div>
+`;
+});
+}
+
+function clock(){
+const d=new Date();
+document.getElementById("clock").innerText=
+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+}
+
+setInterval(clock,1000);
+clock();
+
+async function weather(){
+try{
+const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=45.1&longitude=24.37&current=temperature_2m");
+const d=await r.json();
+document.getElementById("weather").innerText="🌤️ "+Math.round(d.current.temperature_2m)+"°C";
+}catch(e){}
+}
+
+weather();
+setInterval(weather,600000);
+</script>
+
+</body>
+</html>
