@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<title>Sermirav Exchange Tic Tac</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root { --emblem-opacity:0.3; --shine-time:8s; --hh:4.6vh; --gap:1.2vw; --f-body:'Oswald','Arial Narrow',Arial,sans-serif; --f-num:'Bebas Neue','Oswald','Arial Narrow',Impact,sans-serif; }
+html,body { width:100%; height:100%; overflow:hidden; background:#f1f6fd; color:#f8fafc; font-family:var(--f-body); -webkit-font-smoothing:antialiased; -webkit-text-size-adjust:100%; touch-action:manipulation; -webkit-user-select:none; user-select:none; }
+
+.shell { width:100vw; height:100vh; height:100dvh; display:grid; grid-template-rows:12vh auto 1fr; gap:0.5vh; padding:0.6vh 0.8vw; padding-top:calc(0.6vh + env(safe-area-inset-top,0px)); padding-bottom:calc(0.6vh + env(safe-area-inset-bottom,0px));
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255,255,255,1) 0, rgba(255,255,255,0) 38%),
+    radial-gradient(circle at 88% 30%, rgba(191,226,252,0.3) 0, rgba(191,226,252,0) 38%),
+    radial-gradient(circle at 30% 85%, rgba(205,214,254,0.28) 0, rgba(205,214,254,0) 40%),
+    radial-gradient(circle at 80% 95%, rgba(255,255,255,0.95) 0, rgba(255,255,255,0) 36%),
+    linear-gradient(180deg,#fafcff 0%,#eef5fe 100%); }
+
+/* ---------- HEADER ---------- */
+.header { background:linear-gradient(135deg,rgba(255,255,255,0.96) 0%,rgba(235,244,255,0.9) 100%); border:1px solid rgba(255,255,255,0.95); border-radius:14px; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; padding:0 3vw; gap:1.5vw;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 6px rgba(130,170,220,0.3), 0 10px 28px rgba(30,60,140,0.18); }
+.brand-top { font-family:var(--f-num); font-size:6.2vh; letter-spacing:0.2em; line-height:1; color:#0f1e4a; -webkit-text-stroke:0.02em currentColor; text-shadow:0 0.3vh 0.5vh rgba(15,30,74,0.22); }
+.brand-box { width:max-content; white-space:nowrap; transform-origin:0 50%; }
+.brand-top .ex { color:#2a62bc; }
+.brand-line { height:0.3vh; margin:0.35vh 0; background:linear-gradient(90deg,#d4a72c 0%,rgba(212,167,44,0.15) 100%); border-radius:2px; }
+.brand-sub { font-size:3.4vh; letter-spacing:0.45em; font-weight:700; line-height:1; color:#b8860b; text-shadow:none; }
+@supports ((-webkit-background-clip:text) or (background-clip:text)) {
+  .brand-sub { background-image:linear-gradient(180deg,#dcaa2e 0%,#b8860b 55%,#8a6208 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:none; }
+}
+.weather-row { display:flex; align-items:center; gap:0.8vw; justify-content:center; }
+.w-icon { width:7vh; height:7vh; animation:wPulse 3s ease-in-out infinite; }
+.w-icon svg { width:100%; height:100%; filter:drop-shadow(0 1px 2px rgba(15,30,74,0.45)); }
+#wTemp { font-size:5.5vh; font-weight:700; color:#0f1e4a; line-height:1; }
+.clock-wrap { text-align:right; position:relative; }
+.clock-time { font-family:var(--f-num); font-size:8vh; letter-spacing:0.08em; line-height:1; color:#0f1e4a; cursor:pointer; }
+.clock-s { font-size:5vh; color:#6b7fa8; }
+.offline { display:none; position:absolute; right:0; bottom:-1.4vh; font-size:1.5vh; font-weight:700; letter-spacing:0.2em; color:#f59e0b; }
+.offline.show { display:block; }
+@keyframes wPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+
+/* ---------- ANTET CUBE ANIMATION ---------- */
+.cols, .row { display:grid; grid-template-columns:5.7fr 0.9fr; gap:var(--gap); }
+.hgroup, .cap { display:grid; grid-template-columns:1fr 2.35fr 2.35fr; gap:2vw; padding-right:var(--gap); border:1px solid transparent; }
+.hlab { display:flex; align-items:center; justify-content:center; padding-left:0.14em; height:var(--hh); border-radius:10px; font-size:3.6vh; color:#ffffff; font-weight:900; letter-spacing:0.14em; text-transform:uppercase; background:linear-gradient(135deg,rgba(48,82,125,0.95) 0%,rgba(22,38,62,0.95) 100%); border:1px solid rgba(180,220,255,0.4); box-shadow:inset 0 1px 0 rgba(255,255,255,0.4); }
+.hcell { height:var(--hh); overflow:hidden; border-radius:10px; font-size:3.6vh; font-weight:900; letter-spacing:0.14em; text-transform:uppercase; text-align:center; color:#ffffff; border:1px solid rgba(180,220,255,0.4); box-shadow:inset 0 1px 0 rgba(255,255,255,0.4); }
+.hcell.buy { background:linear-gradient(135deg,rgba(25,75,55,0.92) 0%,rgba(10,35,25,0.92) 100%); color:#ffffff; }
+.hcell.sell { background:linear-gradient(135deg,rgba(75,25,32,0.92) 0%,rgba(35,10,14,0.92) 100%); color:#ffffff; }
+.hcell.card { background:linear-gradient(180deg,rgba(255,206,96,0.9) 0%,rgba(150,100,12,0.9) 100%); border-color:rgba(255,255,255,0.6); color:#fff8e1; }
+
+.hdr-cube-wrap { height:var(--hh); width:100%; overflow:hidden; }
+.hdr-cube-track { display:flex; flex-direction:column; animation: boardLoop 9s ease-in-out infinite; }
+.hdr-cube-item { height:var(--hh); display:flex; align-items:center; justify-content:center; white-space:nowrap; gap:0.6vw; font-size:3.4vh; font-weight:900; letter-spacing:0.12em; }
+.hdr-cube-item svg { width:3.4vh; height:3.4vh; flex-shrink:0; }
+
+@keyframes boardLoop {
+  0%, 55.56% { transform: translateY(0); }
+  66.67%, 88.89% { transform: translateY(-4.6vh); }
+  100% { transform: translateY(-9.2vh); }
+}
+
+/* VANZARE CARD: pe peisaj (TV) cu font mai mic ca sa nu se mai taie */
+@media (min-aspect-ratio: 1/1) { .hcell.card .hdr-cube-item { font-size:2.4vh; letter-spacing:0.02em; } }
+
+/* ---------- RÂNDURI ---------- */
+.list { display:grid; grid-template-rows:repeat(10,1fr); gap:0.8vh; min-height:0; }
+.row { min-height:0; }
+.cap { position:relative; min-height:0; border-radius:12px; overflow:hidden;
+  background:linear-gradient(135deg,#345484 0%,#182a4a 100%);
+  border-color:rgba(180,220,255,0.55);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,0.75), inset 1px 0 0 rgba(255,255,255,0.35), inset 0 -3px 7px rgba(0,0,0,0.35), inset 0 0 30px rgba(140,190,255,0.2),
+    0 0.4vh 0.5vh -0.1vh rgba(5,10,30,0.5), 0 1.1vh 2.2vh -0.3vh rgba(30,80,180,0.4); }
+.cap::before { content:""; position:absolute; left:0; right:0; top:0; bottom:0; border-radius:12px; z-index:0; pointer-events:none;
+  background:linear-gradient(115deg,rgba(255,255,255,0.18) 0%,rgba(255,255,255,0.04) 32%,rgba(255,255,255,0) 55%); }
+.cap > * { position:relative; z-index:1; }
+.cur-info { display:flex; align-items:center; gap:0.5vw; padding-left:calc(9.4vh + 1.2vw); min-width:0; }
+
+/* STEAGURI COLORATE MICI DIN STÂNGA */
+.flag-box { position:absolute; top:-0.8vh; bottom:-0.8vh; left:0; width:9.4vh; overflow:hidden; background:#0f172a; transform-origin:0 50%; animation:flutter 6s ease-in-out infinite;
+  -webkit-mask-image:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M0 0H90C98 14 82 30 90 46C98 62 82 78 90 100H0Z'/%3E%3C/svg%3E");
+  mask-image:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M0 0H90C98 14 82 30 90 46C98 62 82 78 90 100H0Z'/%3E%3C/svg%3E");
+  -webkit-mask-size:100% 100%; mask-size:100% 100%; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; }
+.flag-box::after { content:""; position:absolute; top:0; right:0; bottom:0; left:0; pointer-events:none;
+  background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.34) 0vh,rgba(0,0,0,0.3) 2.4vh,rgba(255,255,255,0.34) 4.8vh); background-size:4.8vh 100%;
+  animation:wave 5s linear infinite; }
+.flag-box svg, .af svg { position:absolute; top:0; left:0; width:100%; height:100%; display:block; }
+@keyframes flutter { 0%,100% { transform:skewY(2deg) scaleX(0.98); } 50% { transform:skewY(-4deg) scaleX(1.05); } }
+@keyframes wave { 0% { background-position:0 0; } 100% { background-position:4.8vh 0; } }
+.row:nth-child(2n) .flag-box { animation-delay:-0.8s; }
+.row:nth-child(3n) .flag-box { animation-delay:-1.6s; }
+.row:nth-child(2n) .flag-box::after { animation-delay:-0.9s; }
+.row:nth-child(3n) .flag-box::after { animation-delay:-1.5s; }
+
+.cur-txt { display:flex; flex-direction:column; justify-content:center; min-width:0; }
+.cur-code { display:none; font-family:var(--f-num); font-size:5.6vw; letter-spacing:0.06em; color:#fff; line-height:1; }
+.cur-name { font-size:2.9vh; color:#ffffff; font-weight:700; text-transform:uppercase; letter-spacing:0.01em; line-height:1.05; text-shadow:0 1px 3px rgba(0,0,0,0.6), 0 0 8px rgba(10,25,60,0.95); }
+
+/* VALORI CUMPĂRARE / VÂNZARE */
+.nb { display:flex; align-items:center; justify-content:center; margin:0.1vh 0; padding-left:0.32em; transform:scaleY(1.15); transform-origin:50% 16%; font-family:var(--f-num); font-size:6.9vh; font-weight:bold; letter-spacing:0.32em; line-height:1; white-space:nowrap; min-width:0; color:#ffffff; text-shadow:0 1px 3px rgba(0,0,0,0.55); }
+
+/* CARDURI GOLD LA POS */
+.cardbox { display:flex; align-items:center; justify-content:center; border-radius:12px; font-family:var(--f-num); font-size:6.4vh; font-weight:bold; letter-spacing:0.03em; line-height:1; white-space:nowrap; overflow:hidden; min-width:0; color:#fff8e1; text-shadow:0 2px 4px rgba(0,0,0,0.45);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,0.42) 0%,rgba(255,255,255,0.06) 46%,rgba(255,255,255,0) 52%),
+    linear-gradient(135deg,rgba(255,208,100,0.9) 0%,rgba(184,126,16,0.88) 100%);
+  border:1px solid rgba(255,255,255,0.7);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,0.95), inset 1px 0 0 rgba(255,255,255,0.4), inset 0 -3px 7px rgba(90,50,0,0.45),
+    0 0.4vh 0.5vh -0.1vh rgba(60,30,0,0.55), 0 1.1vh 2.2vh -0.3vh rgba(150,100,10,0.55); }
+.nb.up { animation:gNum 0.7s ease-in-out; } .cardbox.up { animation:gCard 0.7s ease-in-out; }
+@keyframes gNum { 50% { text-shadow:0 0 18px rgba(255,255,255,0.9); transform:scale(1.04,1.2); } }
+@keyframes gCard { 50% { box-shadow:0 0 20px rgba(212,167,44,0.8); transform:scale(1.04); } }
+
+/* ---------- FUNDAL RAND: dara de culoare din steag (7% - 70% din rând) ---------- */
+.cur-emblem {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 7%;
+  right: 30%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: var(--emblem-opacity);
+  -webkit-mask-image: linear-gradient(90deg, rgba(0,0,0,0) 0%, #000 30%, #000 78%, rgba(0,0,0,0) 100%);
+  mask-image: linear-gradient(90deg, rgba(0,0,0,0) 0%, #000 30%, #000 78%, rgba(0,0,0,0) 100%);
+}
+.cur-emblem .wash { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
+.cur-emblem .wash svg { width: 100%; height: 100%; display: block; filter: blur(7px) saturate(1.1); }
+
+/* ---------- STEAGUL PORNEȘTE DE LA 70% SPRE DREAPTA ---------- */
+.flag-blue {
+  position: absolute; top: 0; bottom: 0; left: 70%; right: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  mask-image: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 45%, rgba(0,0,0,1) 100%);
+  -webkit-mask-image: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 45%, rgba(0,0,0,1) 100%);
+}
+.flag-blue svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; opacity: 0.52; }
+.flag-blue::after {
+  content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,0.18) 0vh, rgba(0,20,60,0.2) 7vh, rgba(255,255,255,0.18) 14vh);
+}
+
+/* ---------- SHINE (trece lin peste titlu, apoi în cascadă pe rânduri) ---------- */
+.header, .hlab, .hcell { position:relative; }
+.hlab { overflow:hidden; }
+.shine-wrap { position:absolute; top:0; right:0; bottom:0; left:0; border-radius:14px; overflow:hidden; pointer-events:none; z-index:3; }
+.shine, .cap > .shine { position:absolute; top:0; bottom:0; left:0; width:30%; z-index:3; pointer-events:none; will-change:transform, opacity;
+  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.06) 28%, rgba(255,255,255,0.24) 50%, rgba(255,255,255,0.06) 72%, rgba(255,255,255,0) 100%);
+  transform:translateX(-120%) skewX(-18deg); opacity:0;
+  animation:shineSweep var(--shine-time) cubic-bezier(0.45,0,0.55,1) infinite both; animation-delay:var(--d,0s); }
+.shine.gold { background:linear-gradient(90deg, rgba(212,167,44,0) 0%, rgba(212,167,44,0.08) 28%, rgba(212,167,44,0.30) 50%, rgba(212,167,44,0.08) 72%, rgba(212,167,44,0) 100%); }
+@keyframes shineSweep {
+  0% { transform:translateX(-120%) skewX(-18deg); opacity:0; }
+  10% { opacity:1; }
+  22% { opacity:1; }
+  32%, 100% { transform:translateX(400%) skewX(-18deg); opacity:0; }
+}
+
+/* CIFRE CUMPARAM / VINDEM mai desfacute, doar pe peisaj; cardul ramane neschimbat */
+@media (min-aspect-ratio: 1/1) { .nb { letter-spacing:0.5em; padding-left:0.5em; } }
+
+/* ---------- ADMIN ---------- */
+.admin-btn { position:fixed; bottom:1.8vh; right:1.8vw; z-index:500; width:3.8vh; height:3.8vh; border-radius:50%; background:transparent; border:1px solid rgba(30,41,59,0.08); color:rgba(30,41,59,0.12); font-family:var(--f-num); font-size:2vh; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.overlay { display:none; position:fixed; top:0; right:0; bottom:0; left:0; background:rgba(11,19,41,0.97); z-index:2000; align-items:center; justify-content:center; }
+.overlay.show { display:flex; }
+.pin-box { background:#1e293b; border:2px solid #334155; border-radius:24px; padding:4vh 3vw; text-align:center; width:26vw; box-shadow:0 15px 40px rgba(0,0,0,0.5); }
+.pin-title { font-family:var(--f-num); font-size:3.5vh; letter-spacing:0.2em; color:#eab308; margin-bottom:0.5vh; }
+.pin-sub { font-size:1.4vh; color:#94a3b8; letter-spacing:0.15em; margin-bottom:3vh; }
+.pin-dots { display:flex; justify-content:center; gap:1.5vw; margin-bottom:3vh; }
+.pin-dot { width:1.8vw; height:1.8vw; border-radius:50%; border:2px solid #475569; transition:all 0.2s; }
+.pin-dot.on { background:#eab308; border-color:#eab308; box-shadow:0 0 1.5vw rgba(234,179,8,0.4); }
+.pin-keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:0.8vw; }
+.pin-key { padding:1.8vh 0; background:#0f172a; border:1px solid #334155; border-radius:12px; color:#f8fafc; font-family:var(--f-num); font-size:3.5vh; cursor:pointer; user-select:none; }
+.pin-key:active { transform:scale(0.94); }
+.pin-key.sm { font-family:var(--f-body); font-size:1.4vh; color:#94a3b8; font-weight:600; }
+.pin-err { font-size:1.4vh; color:#ef4444; margin-top:1.5vh; min-height:1.8vh; font-weight:bold; }
+.admin-box { background:#1e293b; border:2px solid #334155; border-radius:24px; padding:3vh 2.5vw; width:52vw; max-height:90vh; overflow-y:auto; box-shadow:0 15px 50px rgba(0,0,0,0.5); }
+.adm-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:2vh; border-bottom:2px solid #334155; padding-bottom:1.5vh; }
+.adm-title { font-family:var(--f-num); font-size:3.2vh; color:#eab308; }
+.adm-close { background:#0f172a; border:1px solid #475569; color:#f8fafc; width:4vh; height:4vh; border-radius:50%; cursor:pointer; font-size:1.6vh; }
+.adm-cols, .adm-row { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:0.8vw; }
+.adm-cols { margin-bottom:1vh; text-align:center; font-size:1.4vh; font-weight:bold; color:#94a3b8; letter-spacing:0.2em; text-transform:uppercase; }
+.adm-cols div:first-child { text-align:left; }
+.adm-row { align-items:center; margin-bottom:0.8vh; padding:1vh 1vw; background:#0f172a; border-radius:12px; border:1px solid #334155; }
+.adm-row.bad { border-color:#f87171; box-shadow:0 0 0 2px rgba(248,113,113,0.5); }
+.adm-card-preview { text-align:center; font-size:2.2vh; font-weight:bold; color:#d4a72c; }
+.adm-cur { display:flex; align-items:center; gap:0.8vh; font-size:1.8vh; font-weight:700; color:#f8fafc; }
+.af { display:inline-block; position:relative; width:4vh; height:2.5vh; overflow:hidden; border-radius:3px; flex-shrink:0; }
+.adm-input { background:#1e293b; border:2px solid #475569; border-radius:8px; font-family:var(--f-body); font-size:2.2vh; font-weight:bold; color:#f8fafc; padding:0.8vh; text-align:center; width:100%; }
+.adm-input:focus { border-color:#eab308; outline:none; }
+.adm-save { width:100%; margin-top:2vh; padding:1.4vh 0; background:#eab308; border:none; border-radius:12px; color:#0f1e4a; font-family:var(--f-num); font-size:2.6vh; font-weight:bold; letter-spacing:0.15em; cursor:pointer; }
+.adm-save:disabled { opacity:0.4; }
+.adm-msg { text-align:center; font-size:1.4vh; margin-top:1vh; min-height:1.5vh; font-weight:bold; }
+.adm-msg.ok { color:#4ade80; } .adm-msg.err { color:#f87171; }
+
+/* ---------- LINIE DE LUMINA FIXĂ ---------- */
+.cap::after, .cardbox::after { content:""; position:absolute; top:0; right:0; bottom:0; left:0; border-radius:12px; z-index:2; pointer-events:none;
+  background-repeat:no-repeat; background-size:28% 2px, 28% 2px; background-position:0% 0, 100% 100%;
+  background-image:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,0.95),rgba(255,255,255,0)), linear-gradient(90deg,rgba(160,210,255,0),rgba(160,210,255,0.9),rgba(160,210,255,0)); }
+.cardbox { position:relative; }
+
+/* ===== PORTRAIT ===== */
+@media (max-aspect-ratio: 1/1) {
+  .shell { grid-template-rows:9vh auto 1fr; gap:0.9vh; padding:1.2vh 1.5vw; padding-top:calc(1.2vh + env(safe-area-inset-top,0px)); padding-bottom:calc(1.2vh + env(safe-area-inset-bottom,0px)); }
+  .header { padding:0 2.5vw; gap:0; }
+  .brand-top { font-size:4vw; letter-spacing:0.12em; }
+  .brand-line { height:2px; margin:0.5vw 0; }
+  .brand-sub { font-size:2.8vw; letter-spacing:0.4em; }
+  .weather-row { gap:1.5vw; }
+  .w-icon { width:7.5vw; height:7.5vw; }
+  #wTemp { font-size:6vw; }
+  .clock-time { font-size:7.6vw; letter-spacing:0.05em; }
+  .clock-s { font-size:4.2vw; }
+  .offline { font-size:2vw; bottom:-0.5vh; }
+
+  .cols, .row { grid-template-columns:3.7fr 1fr; }
+  .hgroup, .cap { grid-template-columns:1.55fr 1fr 1fr; gap:1.2vw; }
+  .hlab { font-size:2.4vw; font-weight:700; letter-spacing:0.12em; }
+  .hcell { font-size:2.6vw; letter-spacing:0.08em; }
+  .hdr-cube-item { font-size:2.6vw; letter-spacing:0.08em; }
+  .hdr-cube-item svg { width:3vw; height:3vw; }
+
+  .list { gap:0.8vh; }
+  .cur-info { gap:1.4vw; padding-left:calc(13vw + 1.4vw); }
+  .flag-box { width:13vw; }
+  .cur-code { display:block; }
+  .cur-name { font-size:1.75vw; font-weight:600; letter-spacing:0.03em; line-height:1.1; }
+  .lb { display:none; }
+  .nb { margin:1.1vh 0; font-size:6.4vw; letter-spacing:0.03em; padding-left:0.03em; transform-origin:50% 30%; }
+  .cardbox { font-size:5.6vw; letter-spacing:0.04em; }
+  .cur-emblem { left: 36%; right: 34%; }
+  /* ===== STEAGURI: leganare continua, dus-intors (fara sfarsit, fara salt la reluare) ===== */
+.flag-box { animation:flutter 3.6s ease-in-out infinite alternate; will-change:transform; }
+.flag-box::after { right:auto; width:200%; will-change:transform;
+  background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.34) 0vh,rgba(0,0,0,0.3) 2.35vh,rgba(255,255,255,0.34) 4.7vh);
+  background-size:auto; background-position:0 0; animation:windWave 2.4s ease-in-out infinite alternate; }
+@keyframes flutter { from { transform:skewY(1.6deg) scaleX(0.985); } to { transform:skewY(-3deg) scaleX(1.03); } }
+@keyframes windWave { from { transform:translate3d(0,0,0); } to { transform:translate3d(-4.7vh,0,0); } }
+.still .flag-box, .still .flag-box::after { animation:none; }
+
+/* ===== DOAR STEAGURILE SE MISCA: restul animatiilor oprite (usureaza TV-ul) ===== */
+.hdr-cube-track, .htrack, .w-icon,
+.cap::after, .cardbox::after, .nb.up, .cardbox.up { animation:none !important; }
+.shine, .shine-wrap { display:none !important; }
+/* dunga aurie de sub titlu: se mareste si se micsoreaza (doar transform + opacity, foarte usor) */
+.brand-line { transform-origin:0 50%; will-change:transform, opacity; animation:lineBreath 6s ease-in-out infinite; }
+@keyframes lineBreath { 0%,100% { transform:scaleX(0.55); opacity:0.7; } 50% { transform:scaleX(1); opacity:1; } }
+.still .brand-line { animation:none; transform:none; opacity:1; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="blueDuo" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncR type="table" tableValues="0.15 0.38"/><feFuncG type="table" tableValues="0.30 0.58"/><feFuncB type="table" tableValues="0.60 0.88"/></feComponentTransfer></filter><filter id="softRed" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0.55 0.22 0.22 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/></filter><filter id="blueGlow" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncR type="table" tableValues="0.30 0.66"/><feFuncG type="table" tableValues="0.52 0.84"/><feFuncB type="table" tableValues="0.86 1"/></feComponentTransfer></filter><linearGradient id="stripeG" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="70" y2="0" spreadMethod="repeat"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#a6cbf4"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs></svg>
+
+<div class="overlay" id="pinOv">
+  <div class="pin-box">
+    <div class="pin-title">Acces Admin</div>
+    <div class="pin-sub">Introduceti codul de acces</div>
+    <div class="pin-dots"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div></div>
+    <div class="pin-keypad">
+      <div class="pin-key" onclick="pk('1')">1</div><div class="pin-key" onclick="pk('2')">2</div><div class="pin-key" onclick="pk('3')">3</div>
+      <div class="pin-key" onclick="pk('4')">4</div><div class="pin-key" onclick="pk('5')">5</div><div class="pin-key" onclick="pk('6')">6</div>
+      <div class="pin-key" onclick="pk('7')">7</div><div class="pin-key" onclick="pk('8')">8</div><div class="pin-key" onclick="pk('9')">9</div>
+      <div class="pin-key sm" onclick="pkDel()">Sterge</div><div class="pin-key" onclick="pk('0')">0</div><div class="pin-key sm" onclick="pinClose()">Iesi</div>
+    </div>
+    <div class="pin-err" id="pinErr"></div>
+  </div>
+</div>
+
+<div class="overlay" id="adminOv">
+  <div class="admin-box">
+    <div class="adm-head">
+      <div class="adm-title">Editeaza Cursuri (Tic Tac)</div>
+      <button class="adm-close" onclick="adminClose()">X</button>
+    </div>
+    <div class="adm-cols"><div>Valuta</div><div>Cumparam</div><div>Vindem</div><div>Card</div></div>
+    <div id="adminRows"></div>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:1vw; margin:1.5vh 0; padding-top:1.5vh; border-top:2px solid #334155;">
+      <span style="font-size:1.8vh; font-weight:700; color:#f8fafc;">Procent Card (peste curs Vindem, %)</span>
+      <input class="adm-input" type="number" step="0.01" id="admCardPct" style="width:16vw;" value="1.45" oninput="admUpdateAll()">
+    </div>
+    <button class="adm-save" id="admSaveBtn" onclick="adminSave()">Salveaza Cursurile</button>
+    <div class="adm-msg" id="admMsg"></div>
+  </div>
+</div>
+
+<div class="shell">
+  <header class="header">
+    <div class="brand-box">
+      <div class="brand-top">SERMIRAV <span class="ex">EXCHANGE</span></div>
+      <div class="brand-line"></div>
+      <div class="brand-sub">TIC TAC</div>
+    </div>
+    <div class="weather-row"><div id="wIcon" class="w-icon"></div><strong id="wTemp">--&deg;C</strong></div>
+    <div class="clock-wrap" onclick="clockTap()"><div class="clock-time"><span id="cHM">--:--</span><span class="clock-s" id="cS">:00</span></div><div class="offline" id="offl">OFFLINE</div></div>
+  </header>
+
+  <div class="cols">
+    <div class="hgroup">
+      <div class="hlab">VALUTA</div>
+      <div class="hcell buy">
+        <div class="hdr-cube-wrap"><div class="hdr-cube-track">
+          <div class="hdr-cube-item">CUMPARĂM</div>
+          <div class="hdr-cube-item">WE BUY</div>
+          <div class="hdr-cube-item">CUMPARĂM</div>
+        </div></div>
+      </div>
+      <div class="hcell sell">
+        <div class="hdr-cube-wrap"><div class="hdr-cube-track">
+          <div class="hdr-cube-item">VINDEM</div>
+          <div class="hdr-cube-item">WE SELL</div>
+          <div class="hdr-cube-item">VINDEM</div>
+        </div></div>
+      </div>
+    </div>
+    <div class="hcell card">
+      <div class="hdr-cube-wrap"><div class="hdr-cube-track">
+        <div class="hdr-cube-item">VANZARE CARD</div>
+        <div class="hdr-cube-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff8e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"/><line x1="2" y1="10" x2="22" y2="10"/></svg>POS
+        </div>
+        <div class="hdr-cube-item">VANZARE CARD</div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="list" id="list"></div>
+</div>
+
+<button class="admin-btn" onclick="pinOpen()">M</button>
+
+<script>
+/* ================= SETARI SERMIRAV EXCHANGE TIC TAC ================= */
+var PIN = "1234";                                   /* cod admin (4 cifre) */
+var FB_DB = "https://tictac-319f5-default-rtdb.europe-west1.firebasedatabase.app"; /* baza Firebase Realtime Database */
+var FB_PATH = "/tictac/rates";                    /* locul unde sunt salvate cursurile */
+var FB_URL = FB_DB + FB_PATH;
+var FB_TIMEOUT = 15000;                             /* ms, asteptare raspuns Firebase */
+var RATES_POLL_MS = 30000;                          /* cursurile se reiau la 30 secunde */
+var CARD_PCT_DEFAULT = 1.45;                        /* procent card peste Vindem, % (se schimba din admin) */
+var CARD_MARKUP = 1 + CARD_PCT_DEFAULT / 100;
+var LS_KEY = "sermiravTicTacRates";                       /* copie locala pentru cand nu e internet */
+var TZ = "Europe/Bucharest";                        /* fus orar ceas */
+var WEATHER_LAT = 45.0997, WEATHER_LON = 24.3693;   /* Ramnicu Valcea */
+var WEATHER_POLL_MS = 600000;                       /* vremea se reia la 10 minute */
+var BRAND_MAX_SCALE = 1.12;                         /* cat de lat poate fi titlul */
+var FLAG_MOTION = "light";                          /* "light" = steaguri cu miscare usoara, "off" = steaguri fixe (daca tot sacadeaza) */
+if (FLAG_MOTION === "off") document.documentElement.className += " still";
+/* Vizual: in CSS, la inceput, sunt --emblem-opacity (desenele) si --shine-time (stralucirea) */
+/* ============================================================= */
+
+var CURRENCIES = [
+  {code:"EUR", name:"EURO"},
+  {code:"USD", name:"DOLAR <br class='lb'>AMERICAN"},
+  {code:"GBP", name:"LIRA <br class='lb'>STERLINA"},
+  {code:"CHF", name:"FRANC <br class='lb'>ELVETIAN"},
+  {code:"CAD", name:"DOLAR <br class='lb'>CANADIAN"},
+  {code:"AUD", name:"DOLAR <br class='lb'>AUSTRALIAN"},
+  {code:"PLN", name:"ZLOT <br class='lb'>POLONEZ"},
+  {code:"TRY", name:"LIRA <br class='lb'>TURCEASCA"},
+  {code:"HUF", name:"FORINT <br class='lb'>MAGHIAR"},
+  {code:"AED", name:"DIRHAM <br class='lb'>EMIRATE"}
+];
+function plainName(n) { return n.replace(/<br[^>]*>/g, " "); }
+
+/* FUNDAL: culorile steagului valutei, incetosate */
+function noteSvg(code) {
+  return '<div class="wash"><svg viewBox="0 0 30 20" preserveAspectRatio="none"><g filter="url(#softRed)">' + FL[code][0] + '</g></svg></div>';
+}
+
+var DEF = {
+  EUR:{buy:4.97,sell:5.05}, USD:{buy:4.33,sell:4.45},
+  GBP:{buy:5.82,sell:6.03}, CHF:{buy:5.59,sell:5.71},
+  CAD:{buy:3.07,sell:3.30}, AUD:{buy:2.76,sell:3.10},
+  PLN:{buy:1.14,sell:1.22}, TRY:{buy:0.095,sell:0.119},
+  HUF:{buy:0.013,sell:0.0141}, AED:{buy:1.0020,sell:1.2500}
+};
+var rates = {};
+for (var dk in DEF) rates[dk] = DEF[dk];
+(function () {
+  try {
+    var s = localStorage.getItem(LS_KEY);
+    if (s) {
+      var d = JSON.parse(s);
+      if (d && d.rates) { rates = d.rates; if (typeof d.pct === "number") CARD_MARKUP = 1 + d.pct / 100; }
+    }
+  } catch (e) {}
+})();
+function cacheRates() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ rates: rates, pct: (CARD_MARKUP - 1) * 100 })); } catch (e) {}
+}
+function setOffline(on) { document.getElementById("offl").classList.toggle("show", !!on); }
+function mergeRates(d) {
+  var out = {};
+  for (var i = 0; i < CURRENCIES.length; i++) {
+    var k = CURRENCIES[i].code;
+    out[k] = (d && d[k] && typeof d[k] === "object") ? d[k] : (rates[k] || {});
+  }
+  return out;
+}
+
+function star(cx, cy, R, r, rot, fill) {
+  var p = [], i, a, q;
+  for (i = 0; i < 10; i++) { a = rot + i * Math.PI / 5; q = i % 2 ? r : R; p.push((cx + q * Math.sin(a)).toFixed(2) + "," + (cy - q * Math.cos(a)).toFixed(2)); }
+  return '<polygon points="' + p.join(" ") + '" fill="' + fill + '"/>';
+}
+function gbBody() {
+  return '<rect width="30" height="20" fill="#012169"/><path d="M0 0L30 20M30 0L0 20" stroke="#fff" stroke-width="4"/><path d="M0 0L30 20M30 0L0 20" stroke="#c8102e" stroke-width="1.6"/><path d="M15 0V20M0 10H30" stroke="#fff" stroke-width="6.5"/><path d="M15 0V20M0 10H30" stroke="#c8102e" stroke-width="4"/>';
+}
+var FL = {};
+(function () {
+  var k, r, c, s;
+  s = '<rect width="30" height="20" fill="#039"/>';
+  for (k = 0; k < 12; k++) s += '<circle cx="' + (15 + 6 * Math.sin(k * Math.PI / 6)).toFixed(2) + '" cy="' + (10 - 6 * Math.cos(k * Math.PI / 6)).toFixed(2) + '" r=".9" fill="#fc0"/>';
+  FL.EUR = [s, "xMidYMid slice"];
+  s = '<rect width="30" height="20" fill="#fff"/>';
+  for (k = 0; k < 13; k += 2) s += '<rect y="' + (k * 20 / 13).toFixed(2) + '" width="30" height="' + (20 / 13).toFixed(2) + '" fill="#b22234"/>';
+  s += '<rect width="12" height="10.77" fill="#3c3b6e"/>';
+  for (r = 0; r < 4; r++) for (c = 0; c < 5; c++) s += '<circle cx="' + (1.4 + c * 2.3) + '" cy="' + (1.5 + r * 2.4) + '" r=".55" fill="#fff"/>';
+  FL.USD = [s, "xMinYMid slice"];
+  FL.GBP = [gbBody(), "xMidYMid slice"];
+  FL.CHF = ['<rect width="30" height="20" fill="#d52b1e"/><rect x="13" y="4.5" width="4" height="11" fill="#fff"/><rect x="9.5" y="8" width="11" height="4" fill="#fff"/>', "xMidYMid slice"];
+  FL.CAD = ['<rect width="30" height="20" fill="#fff"/><rect width="7.5" height="20" fill="#d52b1e"/><rect x="22.5" width="7.5" height="20" fill="#d52b1e"/><polygon fill="#d52b1e" points="15,3.5 16.3,6.5 18.8,5.7 18,9 20.5,8.7 19,11 20,12 15.8,12.6 15.8,16.5 14.2,16.5 14.2,12.6 10,12 11,11 9.5,8.7 12,9 11.2,5.7 13.7,6.5"/>', "xMidYMid slice"];
+  s = '<rect width="30" height="20" fill="#00247d"/><g transform="scale(.5)">' + gbBody() + '</g>' + star(7.5, 15.5, 2, .9, 0, "#fff");
+  s += star(22.5, 3.5, 1.3, .55, 0, "#fff") + star(26.5, 8, 1.3, .55, 0, "#fff") + star(19.5, 8.5, 1.3, .55, 0, "#fff") + star(22.5, 15, 1.3, .55, 0, "#fff") + star(24.2, 10.8, .8, .35, 0, "#fff");
+  FL.AUD = [s, "xMidYMid slice"];
+  FL.PLN = ['<rect width="30" height="10" fill="#fff"/><rect y="10" width="30" height="10" fill="#dc143c"/>', "xMidYMid slice"];
+  FL.TRY = ['<rect width="30" height="20" fill="#e30a17"/><circle cx="11.2" cy="10" r="5" fill="#fff"/><circle cx="12.5" cy="10" r="4" fill="#e30a17"/>' + star(17.4, 10, 2, .8, -Math.PI / 2, "#fff"), "xMidYMid slice"];
+  FL.HUF = ['<rect width="30" height="6.7" fill="#ce2939"/><rect y="6.7" width="30" height="6.7" fill="#fff"/><rect y="13.4" width="30" height="6.6" fill="#477050"/>', "xMidYMid slice"];
+  FL.AED = ['<rect width="30" height="6.7" fill="#00732f"/><rect y="6.7" width="30" height="6.7" fill="#fff"/><rect y="13.4" width="30" height="6.6" fill="#000"/><rect width="7.5" height="20" fill="#f00"/>', "xMinYMid slice"];
+})();
+function flagSvg(code) {
+  var f = FL[code];
+  return '<svg viewBox="0 0 30 20" preserveAspectRatio="' + f[1] + '">' + f[0] + '</svg>';
+}
+
+function cardRate(s) { return (s === null || s === undefined || s === "") ? null : parseFloat(s) * CARD_MARKUP; }
+function fmt(v) { return (v === null || v === undefined || v === "" || isNaN(parseFloat(v))) ? "--" : parseFloat(v).toFixed(4); }
+
+function blueFlagSvg(code) {
+  var f = FL[code];
+  return '<svg viewBox="0 0 30 20" preserveAspectRatio="none"><g filter="url(#blueDuo)">' + f[0] + '</g></svg>';
+}
+function buildRows() {
+  var h = "";
+  for (var i = 0; i < CURRENCIES.length; i++) {
+    var c = CURRENCIES[i], r = rates[c.code] || {};
+    h += '<div class="row"><div class="cap">' +
+      '<div class="cur-emblem">' + noteSvg(c.code) + '</div>' +
+      '<div class="flag-blue">' + blueFlagSvg(c.code) + '</div>' +
+      '<div class="cur-info"><div class="flag-box">' + flagSvg(c.code) + '</div>' +
+      '<div class="cur-txt"><div class="cur-code">' + c.code + '</div><div class="cur-name">' + c.name + '</div></div></div>' +
+      '<div class="nb buy" id="b-' + c.code + '">' + fmt(r.buy) + '</div>' +
+      '<div class="nb sell" id="s-' + c.code + '">' + fmt(r.sell) + '</div></div>' +
+      '<div class="cardbox" id="c-' + c.code + '">' + fmt(cardRate(r.sell)) + '</div></div>';
+  }
+  document.getElementById("list").innerHTML = h;
+}
+
+function setVal(el, txt) {
+  if (!el || el.textContent === txt) return;
+  el.textContent = txt;
+  el.classList.remove("up"); void el.offsetWidth; el.classList.add("up");
+  clearTimeout(el._t);
+  el._t = setTimeout(function () { el.classList.remove("up"); }, 800);
+}
+function updateVals() {
+  for (var i = 0; i < CURRENCIES.length; i++) {
+    var k = CURRENCIES[i].code, r = rates[k] || {};
+    setVal(document.getElementById("b-" + k), fmt(r.buy));
+    setVal(document.getElementById("s-" + k), fmt(r.sell));
+    setVal(document.getElementById("c-" + k), fmt(cardRate(r.sell)));
+  }
+}
+
+function fetchRates() {
+  var x = new XMLHttpRequest();
+  x.open("GET", FB_URL + ".json", true);
+  x.timeout = FB_TIMEOUT;
+  x.onreadystatechange = function () {
+    if (x.readyState !== 4) return;
+    if (x.status === 200) {
+      try {
+        var d = JSON.parse(x.responseText);
+        if (d) {
+          if (typeof d._cardPct === "number") CARD_MARKUP = 1 + d._cardPct / 100;
+          rates = mergeRates(d); cacheRates(); updateVals(); setOffline(false);
+          return;
+        }
+      } catch (e) {}
+    }
+    setOffline(true);
+  };
+  x.send();
+}
+function saveRates(nr, cb) {
+  var x = new XMLHttpRequest();
+  x.open("PUT", FB_URL + ".json", true);
+  x.setRequestHeader("Content-Type", "application/json");
+  x.onreadystatechange = function () { if (x.readyState === 4) cb(x.status === 200 ? null : "Eroare HTTP " + x.status); };
+  x.send(JSON.stringify(nr));
+}
+
+function tick() {
+  var p = new Intl.DateTimeFormat("en-US", {timeZone:TZ, hour12:false, hour:"numeric", minute:"numeric", second:"numeric"}).formatToParts(new Date()), o = {};
+  for (var i = 0; i < p.length; i++) if (p[i].type !== "literal") o[p[i].type] = p[i].value;
+  var hr = parseInt(o.hour, 10) % 24;
+  document.getElementById("cHM").textContent = String(hr).padStart(2, "0") + ":" + String(o.minute).padStart(2, "0");
+  document.getElementById("cS").textContent = ":" + String(o.second).padStart(2, "0");
+}
+
+var SV = {
+  sun:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="#ffb300"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="#ffb300" stroke-width="2" stroke-linecap="round"/></svg>',
+  cloud:'<svg viewBox="0 0 24 24"><path d="M6.5 18A3.5 3.5 0 0 1 10 14.5c.3 0 .58.04.85.11A4.5 4.5 0 0 1 19.5 13a4.5 4.5 0 0 1 .5 8.97V22H6.5a3.5 3.5 0 0 1 0-7z" fill="#b0bec5"/></svg>',
+  partly:'<svg viewBox="0 0 24 24"><circle cx="15.5" cy="8.5" r="3.5" fill="#ffb300"/><path d="M6.5 18A3.5 3.5 0 0 1 10 14.5c.3 0 .58.04.85.11A4.5 4.5 0 0 1 19.5 13a4.5 4.5 0 0 1 .5 8.97V22H6.5a3.5 3.5 0 0 1 0-7z" fill="#cfd8dc"/></svg>',
+  rain:'<svg viewBox="0 0 24 24"><path d="M6.5 15A3.5 3.5 0 0 1 10 11.5c.3 0 .58.04.85.11A4.5 4.5 0 0 1 19.5 10a4.5 4.5 0 0 1 .5 8.97V19H6.5a3.5 3.5 0 0 1 0-7z" fill="#90a4ae"/><path d="M9 21v2M13 21v2M17 21v2" stroke="#29b6f6" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  snow:'<svg viewBox="0 0 24 24"><path d="M6.5 15A3.5 3.5 0 0 1 10 11.5c.3 0 .58.04.85.11A4.5 4.5 0 0 1 19.5 10a4.5 4.5 0 0 1 .5 8.97V19H6.5a3.5 3.5 0 0 1 0-7z" fill="#90a4ae"/><circle cx="9" cy="22" r="1" fill="#e0e0e0"/><circle cx="13" cy="22" r="1" fill="#e0e0e0"/><circle cx="17" cy="22" r="1" fill="#e0e0e0"/></svg>',
+  storm:'<svg viewBox="0 0 24 24"><path d="M6.5 15A3.5 3.5 0 0 1 10 11.5c.3 0 .58.04.85.11A4.5 4.5 0 0 1 19.5 10a4.5 4.5 0 0 1 .5 8.97V19H6.5a3.5 3.5 0 0 1 0-7z" fill="#78909c"/><path d="M13 18l-2 3h3l-1 3" stroke="#ffeb3b" stroke-width="1.5" fill="none"/></svg>'
+};
+var WC = {0:"sun",1:"partly",2:"partly",3:"cloud",45:"cloud",48:"cloud",
+  51:"rain",53:"rain",55:"rain",56:"rain",57:"rain",61:"rain",63:"rain",65:"rain",66:"rain",67:"rain",
+  71:"snow",73:"snow",75:"snow",77:"snow",80:"rain",81:"rain",82:"storm",85:"snow",86:"snow",95:"storm",96:"storm",99:"storm"};
+function fetchWeather() {
+  var x = new XMLHttpRequest();
+  x.open("GET", "https://api.open-meteo.com/v1/forecast?latitude=" + WEATHER_LAT + "&longitude=" + WEATHER_LON + "&current=temperature_2m,weathercode&timezone=auto", true);
+  x.onreadystatechange = function () {
+    if (x.readyState === 4 && x.status === 200) {
+      try {
+        var d = JSON.parse(x.responseText);
+        document.getElementById("wIcon").innerHTML = SV[WC[d.current.weathercode] || "partly"];
+        document.getElementById("wTemp").innerHTML = Math.round(d.current.temperature_2m) + "&deg;C";
+      } catch (e) {}
+    }
+  };
+  x.send();
+}
+
+var buf = "";
+function dots() { for (var i = 0; i < 4; i++) document.getElementById("pd" + i).classList.toggle("on", i < buf.length); }
+window.pk = function (d) {
+  if (buf.length >= 4) return;
+  buf += d; dots();
+  if (buf.length === 4) setTimeout(function () {
+    if (buf === PIN) { pinClose(); adminOpen(); }
+    else { document.getElementById("pinErr").textContent = "Cod incorect."; setTimeout(function () { buf = ""; dots(); document.getElementById("pinErr").textContent = ""; }, 900); }
+    buf = "";
+  }, 150);
+};
+window.pkDel = function () { buf = buf.slice(0, -1); dots(); };
+window.pinClose = function () { document.getElementById("pinOv").classList.remove("show"); buf = ""; dots(); document.getElementById("pinErr").textContent = ""; };
+window.pinOpen = function () { document.getElementById("pinOv").classList.add("show"); };
+var tc = 0, tt = null;
+window.clockTap = function () { tc++; clearTimeout(tt); tt = setTimeout(function () { tc = 0; }, 1400); if (tc >= 3) { tc = 0; pinOpen(); } };
+var kb = "", kt = null;
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") { pinClose(); adminClose(); return; }
+  if (e.key >= "0" && e.key <= "9") {
+    kb += e.key; clearTimeout(kt); kt = setTimeout(function () { kb = ""; }, 4000);
+    if (kb.slice(-4) === PIN) { kb = ""; pinClose(); adminOpen(); }
+  }
+});
+
+function adminOpen() {
+  var rows = document.getElementById("adminRows");
+  rows.innerHTML = "";
+  for (var i = 0; i < CURRENCIES.length; i++) {
+    var cur = CURRENCIES[i], rv = rates[cur.code] || {};
+    var row = document.createElement("div");
+    row.className = "adm-row";
+    row.id = "ar-" + cur.code;
+    row.innerHTML =
+      '<div class="adm-cur"><span class="af">' + flagSvg(cur.code) + '</span>' + cur.code + '<span class="adm-nm"> - ' + plainName(cur.name) + '</span></div>' +
+      '<input class="adm-input" type="number" step="0.0001" id="ab-' + cur.code + '" value="' + (rv.buy || "") + '">' +
+      '<input class="adm-input" type="number" step="0.0001" id="as-' + cur.code + '" oninput="admUpdateAll()" value="' + (rv.sell || "") + '">' +
+      '<div class="adm-card-preview" id="ac-' + cur.code + '">' + fmt(cardRate(rv.sell)) + '</div>';
+    rows.appendChild(row);
+  }
+  document.getElementById("admCardPct").value = ((CARD_MARKUP - 1) * 100).toFixed(2);
+  document.getElementById("adminOv").classList.add("show");
+}
+window.admUpdateAll = function () {
+  var pct = parseFloat(document.getElementById("admCardPct").value);
+  if (isNaN(pct)) pct = (CARD_MARKUP - 1) * 100;
+  for (var i = 0; i < CURRENCIES.length; i++) {
+    var k = CURRENCIES[i].code, s = parseFloat(document.getElementById("as-" + k).value);
+    document.getElementById("ac-" + k).textContent = isNaN(s) ? "--" : (s * (1 + pct / 100)).toFixed(4);
+  }
+};
+window.adminClose = function () { document.getElementById("adminOv").classList.remove("show"); };
+window.adminSave = function () {
+  var btn = document.getElementById("admSaveBtn"), msg = document.getElementById("admMsg"), nr = {}, bad = [], i, k, b, s;
+  for (i = 0; i < CURRENCIES.length; i++) {
+    k = CURRENCIES[i].code;
+    b = parseFloat(document.getElementById("ab-" + k).value);
+    s = parseFloat(document.getElementById("as-" + k).value);
+    document.getElementById("ar-" + k).classList.remove("bad");
+    if (!isNaN(b) && !isNaN(s) && s < b) { bad.push(k); document.getElementById("ar-" + k).classList.add("bad"); }
+    nr[k] = { buy: isNaN(b) ? null : b, sell: isNaN(s) ? null : s };
+  }
+  if (bad.length) {
+    msg.textContent = "Vindem < Cumparam la: " + bad.join(", ") + ". Corecteaza."; msg.className = "adm-msg err";
+    return;
+  }
+  var pct = parseFloat(document.getElementById("admCardPct").value);
+  if (isNaN(pct)) pct = (CARD_MARKUP - 1) * 100;
+  nr._cardPct = pct;
+  btn.disabled = true; btn.textContent = "Se salveaza...";
+  saveRates(nr, function (err) {
+    if (!err) { CARD_MARKUP = 1 + pct / 100; rates = mergeRates(nr); cacheRates(); updateVals(); setOffline(false); msg.textContent = "Salvat cu succes!"; msg.className = "adm-msg ok"; }
+    else { msg.textContent = "Eroare: " + err; msg.className = "adm-msg err"; }
+    btn.disabled = false; btn.textContent = "Salveaza Cursurile";
+    setTimeout(function () { msg.textContent = ""; msg.className = "adm-msg"; }, 4000);
+  });
+};
+
+buildRows();
+(function () {
+  function add(el, d, cls) { var w = document.createElement("div"); w.className = "shine" + (cls ? " " + cls : ""); w.style.setProperty("--d", d + "s"); el.appendChild(w); }
+  var h = document.querySelector(".header"), wrap = document.createElement("div"), i;
+  wrap.className = "shine-wrap"; h.appendChild(wrap); add(wrap, 0, "gold");
+  var hc = document.querySelectorAll(".hlab, .hcell");
+  for (i = 0; i < hc.length; i++) add(hc[i], 0.5 + i * 0.12);
+  var caps = document.querySelectorAll("#list .cap");
+  for (i = 0; i < caps.length; i++) add(caps[i], 1.1 + i * 0.16);
+})();
+/* TITLUL SE POTRIVESTE SINGUR PE ECRAN (latime si inaltime) */
+function fitBrand() {
+  var box = document.querySelector(".brand-box"), hd = document.querySelector(".header"), wr = document.querySelector(".weather-row");
+  if (!box || !hd || !wr) return;
+  box.style.transform = "none";
+  var nat = box.offsetWidth, bh = box.offsetHeight;
+  if (!nat || !bh) return;
+  var avail = wr.getBoundingClientRect().left - box.getBoundingClientRect().left - 14;
+  var kx = avail / nat, ky = (hd.clientHeight * 0.9) / bh, k = Math.min(1, kx, ky);
+  box.style.transform = k < 1 ? "scale(" + k.toFixed(3) + ")" : "scaleX(" + Math.min(BRAND_MAX_SCALE, kx).toFixed(3) + ")";
+}
+window.addEventListener("resize", fitBrand);
+window.addEventListener("orientationchange", function () { setTimeout(fitBrand, 200); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitBrand);
+fitBrand(); setTimeout(fitBrand, 600);
+fetchRates(); setInterval(fetchRates, RATES_POLL_MS);
+tick(); setInterval(tick, 1000);
+fetchWeather(); setInterval(fetchWeather, WEATHER_POLL_MS);
+</script>
+</body>
+</html>
